@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Did Do</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#212A33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Did Do">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --desk: #212A33;
+    --card: #FBF8F1;
+    --rule: #B9CBD8;
+    --margin: #C0453E;
+    --ink: #232B36;
+    --graphite: #7A8390;
+    --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--desk); }
+  body {
+    min-height: 100vh;
+    padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+    max-width: 520px;
+    margin: 0 auto;
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  button { cursor: pointer; font-family: var(--sans); }
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--margin); outline-offset: 2px;
+  }
+
+  header { padding: 26px 4px 18px; }
+  h1 {
+    font-family: var(--mono); font-size: 15px; font-weight: 500;
+    letter-spacing: 0.34em; text-transform: uppercase;
+    color: var(--card); margin: 0;
+  }
+  .sub { font-size: 12px; color: var(--graphite); margin: 6px 0 0; }
+
+  .card {
+    background: var(--card); border-radius: 2px; display: flex;
+    overflow: hidden; margin-bottom: 14px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.35), 0 8px 20px rgba(0,0,0,.22);
+  }
+  .bar {
+    width: 3px; flex-shrink: 0; background: rgba(192,69,62,.45);
+    transition: width .2s ease;
+  }
+  .card.running .bar {
+    width: 8px; background: var(--margin);
+    animation: breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+  @media (prefers-reduced-motion: reduce) { .card.running .bar { animation: none } }
+
+  .body { flex: 1; padding: 16px 16px 18px 18px; min-width: 0; }
+  .top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .name {
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--graphite); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .mid {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 12px; margin-top: 6px;
+  }
+  .clock {
+    font-family: var(--mono); font-size: 34px; line-height: 1; color: var(--ink);
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+  .toggle {
+    font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 10px 16px; min-width: 84px; border: 1px solid var(--ink);
+    background: transparent; color: var(--ink); border-radius: 1px; flex-shrink: 0;
+  }
+  .card.running .toggle { background: var(--margin); border-color: var(--margin); color: var(--card); }
+
+  .track { position: relative; height: 3px; margin-top: 14px; }
+  .track i { position: absolute; inset: 0; border-top: 2px dotted var(--rule); }
+  .track b { position: absolute; left: 0; top: 0; border-top: 2px solid var(--ink); transition: width .6s ease; }
+
+  .meta { font-size: 12px; color: var(--graphite); margin-top: 8px; }
+  .meta.met { color: var(--ink); }
+
+  .ghost {
+    font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 6px 10px; border: 1px solid var(--rule); background: transparent;
+    color: var(--graphite); border-radius: 1px;
+  }
+  .ghost.strong { border-color: var(--ink); color: var(--ink); }
+  .ghost.danger { color: var(--margin); }
+
+  .edit { display: grid; gap: 12px; }
+  .row { display: flex; gap: 10px; }
+  .row > label { flex: 1; }
+  label.f {
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--graphite); display: grid; gap: 4px;
+  }
+  input, select {
+    font-family: var(--sans); font-size: 16px; padding: 8px 10px;
+    border: 1px solid var(--rule); border-radius: 1px; background: #fff;
+    color: var(--ink); width: 100%;
+  }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions .right { margin-left: auto; }
+
+  #new {
+    width: 100%; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--graphite); padding: 14px; border: 1px dashed var(--graphite);
+    background: transparent; border-radius: 2px;
+  }
+  .adder {
+    background: var(--card); border-left: 3px solid rgba(192,69,62,.45);
+    padding: 16px; display: grid; gap: 12px; border-radius: 2px;
+  }
+  .note { font-size: 11px; color: var(--graphite); line-height: 1.5; padding: 22px 4px 40px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Did&nbsp;Do</h1>
+  <p class="sub" id="sub"></p>
+</header>
+
+<main id="list"></main>
+
+<button id="new">New timer</button>
+
+<div class="adder hidden" id="adder">
+  <input id="d-name" placeholder="What are you tracking?">
+  <div class="row">
+    <label class="f">Goal (hours)
+      <input id="d-goal" type="number" step="0.5" min="0" value="3">
+    </label>
+    <label class="f">Resets
+      <select id="d-cadence">
+        <option value="day">Daily</option>
+        <option value="week" selected>Weekly</option>
+        <option value="none">Never</option>
+      </select>
+    </label>
+  </div>
+  <div class="actions">
+    <button class="ghost strong" id="d-add">Add timer</button>
+    <button class="ghost" id="d-cancel">Cancel</button>
+  </div>
+</div>
+
+<p class="note">
+  Timers keep counting while the app is closed — they run on start times, not ticks.
+  Forgot to start one? Edit it and add time by hand.
+</p>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "diddo:timers:v1";
+  var SEED = [
+    { name: "Movement",   goalHours: 4,   cadence: "week" },
+    { name: "Operations", goalHours: 7.5, cadence: "week" },
+    { name: "Project",    goalHours: 10,  cadence: "week" }
+  ];
+
+  var timers = [];
+  var editingId = null;
+
+  /* ---------- time ---------- */
+
+  function now() { return Date.now(); }
+
+  function dateKey(d) {
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+
+  function periodKey(cadence, d) {
+    d = d || new Date();
+    if (cadence === "none") return "all";
+    if (cadence === "day") return "d" + dateKey(d);
+    var m = new Date(d);
+    m.setDate(m.getDate() - ((m.getDay() + 6) % 7)); // Monday start
+    m.setHours(0, 0, 0, 0);
+    return "w" + dateKey(m);
+  }
+
+  function elapsed(t) {
+    return t.accumulated + (t.runningSince ? (now() - t.runningSince) / 1000 : 0);
+  }
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  function clock(sec) {
+    var s = Math.max(0, Math.floor(sec));
+    return Math.floor(s / 3600) + ":" + pad(Math.floor((s % 3600) / 60)) + ":" + pad(s % 60);
+  }
+
+  function short(sec) {
+    var s = Math.max(0, Math.floor(sec));
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h === 0 ? m + "m" : h + "h " + pad(m) + "m";
+  }
+
+  function cadenceWord(c) {
+    return c === "day" ? "today" : c === "week" ? "this week" : "all time";
+  }
+
+  function weekLabel() {
+    var d = new Date();
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+  }
+
+  function makeTimer(seed) {
+    return {
+      id: "t" + Math.random().toString(36).slice(2, 9),
+      name: seed.name,
+      goalHours: seed.goalHours,
+      cadence: seed.cadence,
+      accumulated: 0,
+      runningSince: null,
+      periodKey: periodKey(seed.cadence)
+    };
+  }
+
+  /* ---------- storage ---------- */
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { raw = null; }
+    var list = null;
+    if (raw) { try { list = JSON.parse(raw); } catch (e) { list = null; } }
+    if (!Array.isArray(list) || !list.length) list = SEED.map(makeTimer);
+    timers = list;
+    roll();
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(timers)); } catch (e) {}
+  }
+
+  /* reset into the current day/week without losing a running clock */
+  function roll() {
+    var changed = false;
+    timers.forEach(function (t) {
+      var key = periodKey(t.cadence);
+      if (key === t.periodKey) return;
+      t.accumulated = 0;
+      if (t.runningSince) t.runningSince = now();
+      t.periodKey = key;
+      changed = true;
+    });
+    if (changed) save();
+    return changed;
+  }
+
+  function find(id) {
+    for (var i = 0; i < timers.length; i++) if (timers[i].id === id) return timers[i];
+    return null;
+  }
+
+  /* ---------- render ---------- */
+
+  var list = document.getElementById("list");
+  var sub = document.getElementById("sub");
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function render() {
+    list.innerHTML = "";
+    timers.forEach(function (t) { list.appendChild(t.id === editingId ? editCard(t) : viewCard(t)); });
+
+    var weekly = timers.reduce(function (s, t) {
+      return s + (t.cadence === "week" ? elapsed(t) : 0);
+    }, 0);
+    sub.textContent = "Week of " + weekLabel() + " \u00B7 " + short(weekly) + " logged";
+  }
+
+  function shell(t) {
+    var card = el("div", "card" + (t.runningSince ? " running" : ""));
+    card.appendChild(el("div", "bar"));
+    var body = el("div", "body");
+    card.appendChild(body);
+    return { card: card, body: body };
+  }
+
+  function viewCard(t) {
+    var s = shell(t), sec = elapsed(t), goal = t.goalHours * 3600;
+    var pct = goal > 0 ? Math.max(0, Math.min(100, (sec / goal) * 100)) : 0;
+    var met = goal > 0 && sec >= goal;
+
+    var top = el("div", "top");
+    top.appendChild(el("span", "name", t.name));
+    var edit = el("button", "ghost", "Edit");
+    edit.style.padding = "2px 6px";
+    edit.setAttribute("aria-label", "Edit " + t.name);
+    edit.onclick = function () { editingId = t.id; render(); };
+    top.appendChild(edit);
+    s.body.appendChild(top);
+
+    var mid = el("div", "mid");
+    var c = el("span", "clock", clock(sec));
+    c.dataset.clock = t.id;
+    mid.appendChild(c);
+    var btn = el("button", "toggle", t.runningSince ? "Stop" : "Start");
+    btn.onclick = function () { toggle(t.id); };
+    mid.appendChild(btn);
+    s.body.appendChild(mid);
+
+    var track = el("div", "track");
+    track.appendChild(el("i"));
+    var fill = el("b");
+    fill.style.width = pct + "%";
+    track.appendChild(fill);
+    s.body.appendChild(track);
+
+    var meta = el("div", "meta" + (met ? " met" : ""));
+    meta.textContent = goal > 0
+      ? short(sec) + " of " + short(goal) + " " + cadenceWord(t.cadence) + (met ? " \u2014 met" : "")
+      : short(sec) + " " + cadenceWord(t.cadence);
+    s.body.appendChild(meta);
+
+    return s.card;
+  }
+
+  function editCard(t) {
+    var s = shell(t);
+    var wrap = el("div", "edit");
+
+    var name = document.createElement("input");
+    name.value = t.name;
+    name.setAttribute("aria-label", "Timer name");
+    name.oninput = function () { t.name = name.value; save(); };
+    wrap.appendChild(name);
+
+    var row = el("div", "row");
+
+    var lg = el("label", "f", "Goal (hours)");
+    var goal = document.createElement("input");
+    goal.type = "number"; goal.step = "0.5"; goal.min = "0"; goal.value = t.goalHours;
+    goal.oninput = function () { t.goalHours = parseFloat(goal.value) || 0; save(); };
+    lg.appendChild(goal);
+    row.appendChild(lg);
+
+    var lc = el("label", "f", "Resets");
+    var cad = document.createElement("select");
+    [["day", "Daily"], ["week", "Weekly"], ["none", "Never"]].forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o[0]; opt.textContent = o[1];
+      if (t.cadence === o[0]) opt.selected = true;
+      cad.appendChild(opt);
+    });
+    cad.onchange = function () {
+      t.cadence = cad.value;
+      t.periodKey = periodKey(t.cadence);
+      save();
+    };
+    lc.appendChild(cad);
+    row.appendChild(lc);
+    wrap.appendChild(row);
+
+    var actions = el("div", "actions");
+
+    var plus = el("button", "ghost", "+15m");
+    plus.onclick = function () { t.accumulated += 900; save(); render(); };
+    actions.appendChild(plus);
+
+    var clear = el("button", "ghost", "Clear time");
+    clear.onclick = function () { t.accumulated = 0; t.runningSince = null; save(); render(); };
+    actions.appendChild(clear);
+
+    var del = el("button", "ghost danger", "Delete");
+    del.onclick = function () {
+      timers = timers.filter(function (x) { return x.id !== t.id; });
+      editingId = null; save(); render();
+    };
+    actions.appendChild(del);
+
+    var done = el("button", "ghost right", "Done");
+    done.onclick = function () { editingId = null; save(); render(); };
+    actions.appendChild(done);
+
+    wrap.appendChild(actions);
+    s.body.appendChild(wrap);
+    return s.card;
+  }
+
+  function toggle(id) {
+    var t = find(id);
+    if (!t) return;
+    if (t.runningSince) {
+      t.accumulated += (now() - t.runningSince) / 1000;
+      t.runningSince = null;
+    } else {
+      t.runningSince = now();
+    }
+    save();
+    render();
+  }
+
+  /* ---------- ticking: repaint only, truth lives in timestamps ---------- */
+
+  setInterval(function () {
+    if (editingId) return;
+    var running = false;
+    timers.forEach(function (t) {
+      if (!t.runningSince) return;
+      running = true;
+      var node = document.querySelector('[data-clock="' + t.id + '"]');
+      if (node) node.textContent = clock(elapsed(t));
+    });
+    if (running) {
+      var weekly = timers.reduce(function (s, t) {
+        return s + (t.cadence === "week" ? elapsed(t) : 0);
+      }, 0);
+      sub.textContent = "Week of " + weekLabel() + " \u00B7 " + short(weekly) + " logged";
+    }
+  }, 1000);
+
+  setInterval(function () { if (roll()) render(); }, 30000);
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) { roll(); render(); }
+  });
+
+  /* ---------- adder ---------- */
+
+  var adder = document.getElementById("adder");
+  var newBtn = document.getElementById("new");
+  var dName = document.getElementById("d-name");
+  var dGoal = document.getElementById("d-goal");
+  var dCad = document.getElementById("d-cadence");
+
+  newBtn.onclick = function () {
+    adder.classList.remove("hidden");
+    newBtn.classList.add("hidden");
+    dName.focus();
+  };
+  document.getElementById("d-cancel").onclick = function () {
+    adder.classList.add("hidden");
+    newBtn.classList.remove("hidden");
+  };
+  document.getElementById("d-add").onclick = function () {
+    var n = dName.value.trim();
+    if (!n) { dName.focus(); return; }
+    timers.push(makeTimer({ name: n, goalHours: parseFloat(dGoal.value) || 0, cadence: dCad.value }));
+    dName.value = ""; dGoal.value = "3"; dCad.value = "week";
+    adder.classList.add("hidden");
+    newBtn.classList.remove("hidden");
+    save();
+    render();
+  };
+  dName.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("d-add").click();
+  });
+
+  /* ---------- go ---------- */
+
+  load();
+  render();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
